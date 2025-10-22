@@ -1,6 +1,8 @@
-import anime from 'animejs';
+import { anime } from 'animejs';
 import { useEffect, useRef, useState } from 'react';
 import type { AnimationConfig, UseAnimationProps } from '../types';
+import { isElementInViewport } from '../utils/helpers';
+import { animePropertiesMap, animationDefaults } from '../utils/constants';
 
 export function useAnimation({
   animation,
@@ -17,11 +19,7 @@ export function useAnimation({
     if (!ref.current) return;
     anime({
       targets: ref.current,
-      duration,
-      delay,
-      loop,
-      easing: 'easeOutQuad',
-      ...getAnimationConfig(animation),
+      ...getAnimationConfig(animation, duration, delay, loop),
     });
     setAnimated(true);
   };
@@ -49,34 +47,40 @@ export function useAnimation({
     }
   }, [animateOnLoad, animateOnScroll]);
 
-  const getAnimationConfig = (animation: string | string[] | undefined) => {
+  const getAnimationConfig = (
+    animation: string | string[] | undefined,
+    duration?: number,
+    delay?: number,
+    loop?: number
+  ) => {
     if (!animation) return {};
-    if (typeof animation === 'string') {
-      return getPresetAnimation(animation);
-    }
-    if (Array.isArray(animation)) {
-      return animation.reduce((acc, anim) => ({ ...acc, ...getPresetAnimation(anim) }), {});
-    }
-    return {};
-  };
 
-  const getPresetAnimation = (animation: string) => {
-    switch (animation) {
-      case 'fadeIn':
-        return { opacity: [0, 1] };
-      case 'fadeUp':
-        return { opacity: [0, 1], translateY: [20, 0] };
-      case 'slideUp':
-        return { translateY: [50, 0], opacity: [0, 1] };
-      case 'zoomIn':
-        return { scale: [0, 1], opacity: [0, 1] };
-      case 'bounce':
-        return { translateY: [0, -30, 0], opacity: [1, 1] };
-      case 'rotateRight':
-        return { rotate: [0, 360] };
-      default:
-        return {};
+    const baseConfig: AnimationConfig = {
+      duration: duration ?? 1000,
+      delay: delay ?? 0,
+      loop: loop ?? 0,
+      easing: 'easeOutQuad',
+    };
+
+    if (typeof animation === 'string') {
+      return {
+        ...baseConfig,
+        ...animationDefaults[animation],
+        ...animePropertiesMap[animation],
+      };
+    } else if (Array.isArray(animation)) {
+      // Merge every animation config
+      const merged = animation.reduce((acc, anim) => {
+        return {
+          ...acc,
+          ...animationDefaults[anim],
+          ...animePropertiesMap[anim],
+        };
+      }, baseConfig);
+      return merged;
     }
+
+    return baseConfig;
   };
 
   return { ref, play, updateConfig: () => {} };
