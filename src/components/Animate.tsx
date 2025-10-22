@@ -1,109 +1,226 @@
-import { anime } from 'animejs';
+import { animate, createScope } from 'animejs';
 import { useEffect, useRef, useState } from 'react';
-import type { AnimationConfig, UseAnimationProps, AnimationTarget, ScrollConfig } from '../types';
-import { isElementInViewport } from '../utils/helpers';
 import React from 'react';
-import { animePropertiesMap, animationDefaults } from '../utils/constants';
+import type { 
+  AnimationConfig, 
+  UseAnimationProps, 
+  AnimationTarget, 
+  ScrollConfig,
+  AnimationName
+} from '../types';
+import { mergeAnimationConfig } from '../utils/constants';
+import { useAnimation } from '../hooks/useAnimation';
 
-interface AnimateProps extends UseAnimationProps, React.HTMLAttributes<HTMLDivElement> {}
+// Filter out custom props from DOM attributes
+const filterDOMProps = (props: any) => {
+  const {
+    animation,
+    animateOnScroll,
+    animateOnLoad,
+    childAnimations,
+    duration,
+    delay,
+    loop,
+    scrollThreshold,
+    parentId,
+    direction,
+    ease,
+    ...domProps
+  } = props;
+  return domProps;
+};
+
+interface AnimateProps extends UseAnimationProps, Omit<React.HTMLAttributes<HTMLDivElement>, 'ref'> {}
 
 export const Animate: React.FC<AnimateProps> = ({
   animation,
-  animateOnScroll,
+  animateOnScroll = false,
   animateOnLoad = true,
   childAnimations = [],
   duration,
   delay,
   loop,
   scrollThreshold,
-  style,
-  className,
+  direction,
+  ease,
   children,
   ...rest
 }) => {
+  const scope = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [animated, setAnimated] = useState(false);
+  const scrollObservers = useRef<Map<string, any>>(new Map());
+  
+  // Initialize scope and cleanup
+  useEffect(() => {
+    if (containerRef.current) {
+      scope.current = createScope({ root: containerRef.current });
+    }
 
-  // Helper to play animation
+    return () => {
+      // Cleanup scroll observers
+      scrollObservers.current.forEach(observer => {
+        if (observer.remove) observer.remove();
+      });
+      scrollObservers.current.clear();
+      
+      // Cleanup scope
+      if (scope.current?.revert) {
+        scope.current.revert();
+      }
+    };
+  }, []);
+
+  // Helper to get element by ID
+  const getElementById = (id: string, parentId?: string): HTMLElement | null => {
+    const parent = parentId ? 
+      containerRef.current?.querySelector(`#${parentId}`) as HTMLElement || containerRef.current :
+      containerRef.current;
+    
+    return parent?.querySelector(`#${id}`) as HTMLElement || null;
+  };
+
+  // Core animation function
+  const animateElement = (
+    element: HTMLElement,
+    config: AnimationConfig = {}
+  ) => {
+    const animationName = config.animation || animation;
+    let animeConfig: any = {
+      targets: element,
+      duration: config.duration || duration || 1000,
+      delay: config.delay || delay || 0,
+      loop: config.loop || loop || 0,
+      direction: config.direction || direction || 'normal',
+      ease: config.ease || ease || 'easeOutQuad',
+    };
+
+    // Apply animation presets
+    if (animationName) {
+      if (Array.isArray(animationName)) {
+        // Merge multiple animations
+        animationName.forEach(name => {
+          const merged = mergeAnimationConfig(name as AnimationName, config);
+          animeConfig = { ...animeConfig, ...merged };
+        });
+      } else {
+        const merged = mergeAnimationConfig(animationName as AnimationName, config);
+        animeConfig = { ...animeConfig, ...merged };
+      }
+    }
+
+    // Remove non-anime properties
+    delete animeConfig.animation;
+    
+    return animate(animeConfig);
+  };
+
+  // Setup scroll animation for element
+  const setupScrollAnimation = (
+    element: HTMLElement,
+    scrollConfig: ScrollConfig | boolean,
+    animConfig: AnimationConfig,
+    id?: string
+  ) => {
+    if (typeof scrollConfig === 'boolean' && !scrollConfig) return;
+    
+    const config = typeof scrollConfig === 'boolean' ? { 
+      enabled: true, 
+      threshold: scrollThreshold || 0.3 
+    } : { 
+      threshold: scrollThreshold || 0.3, 
+      ...scrollConfig 
+    };
+    
+    if (!config.enabled) return;
+
+    // Use anime.js onScroll method
+    const scrollInstance = animate({
+      targets: element,
+      duration: 0, // No initial animation
+      onScroll: {
+        threshold: config.threshold,
+        container: config.container,
+        axis: config.axis || 'y',
+        begin: () => {
+          if (!animated || config.repeat) {
+            animateElement(element, animConfig);
+            if (!config.repeat) setAnimated(true);
+          }
+        }
+      }
+    });
+
+    if (id) {
+      scrollObservers.current.set(`${id}_scroll`, scrollInstance);
+    }
+  };
+
+  // Main animation trigger
   const playAnimation = () => {
     if (!containerRef.current) return;
-    anime({
-      targets: containerRef.current,
-      ...getAnimationConfig(animation, duration, delay, loop),
+    
+    // Animate main container
+    if (animation) {
+      animateElement(containerRef.current, {
+        animation,
+        duration,
+        delay,
+        loop,
+        direction,
+        ease
+      });
+    }
+    
+    // Handle child animations
+    childAnimations.forEach((childConfig) => {
+      const childElement = getElementById(childConfig.id, childConfig.parentId);
+      if (childElement) {
+        if (childConfig.animateOnScroll) {
+          // Setup scroll animation for child
+          setupScrollAnimation(
+            childElement,
+            childConfig.animateOnScroll,
+            childConfig,
+            childConfig.id
+          );
+        } else {
+          // Animate child immediately
+          setTimeout(() => {
+            animateElement(childElement, childConfig);
+          }, childConfig.delay || 0);
+        }
+      }
     });
+    
+    setAnimated(true);
   };
 
   // On load animation
   useEffect(() => {
-    if (animateOnLoad) {
+    if (animateOnLoad && containerRef.current) {
       playAnimation();
-      setAnimated(true);
     }
   }, [animateOnLoad]);
 
-  // Scroll animation
+  // Setup main element scroll animation
   useEffect(() => {
-    if (!animateOnScroll) return;
-    if (!containerRef.current) return;
+    if (animateOnScroll && containerRef.current) {
+      setupScrollAnimation(
+        containerRef.current,
+        animateOnScroll,
+        { animation, duration, delay, loop, direction, ease },
+        'main'
+      );
+    }
+  }, [animateOnScroll]);
 
-    const handler = () => {
-      if (containerRef.current && isElementInViewport(containerRef.current, scrollThreshold ?? 0)) {
-        if (!animated) {
-          playAnimation();
-          setAnimated(true);
-        }
-      }
-    };
-
-    window.addEventListener('scroll', handler);
-
-    return () => {
-      window.removeEventListener('scroll', handler);
-    };
-  }, [animateOnScroll, animated, scrollThreshold]);
-
-  // TODO: Handle childAnimations individually with separate triggers
+  // Filter out custom props to avoid React warnings
+  const domProps = filterDOMProps(rest);
 
   return (
-    <div ref={containerRef} className={className} style={style} {...rest}>
+    <div ref={containerRef} {...domProps}>
       {children}
     </div>
   );
-};
-
-// Helper function for generating animejs options
-const getAnimationConfig = (
-  animation: string | string[] | undefined,
-  duration?: number,
-  delay?: number,
-  loop?: number
-) => {
-  if (!animation) return {};
-
-  const baseConfig: AnimationConfig = {
-    duration: duration ?? 1000,
-    delay: delay ?? 0,
-    loop: loop ?? 0,
-    easing: 'easeOutQuad',
-  };
-
-  if (typeof animation === 'string') {
-    return {
-      ...baseConfig,
-      ...animationDefaults[animation],
-      ...animePropertiesMap[animation],
-    };
-  } else if (Array.isArray(animation)) {
-    // Merge every animation config
-    const merged = animation.reduce((acc, anim) => {
-      return {
-        ...acc,
-        ...animationDefaults[anim],
-        ...animePropertiesMap[anim],
-      };
-    }, baseConfig);
-    return merged;
-  }
-
-  return baseConfig;
 };
