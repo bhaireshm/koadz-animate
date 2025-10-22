@@ -9,7 +9,6 @@ import type {
 import { mergeAnimationConfig } from '../utils/constants';
 import { sanitizeAnimeConfig } from '../utils/animeSanitizer';
 
-// Filter out custom props from DOM attributes
 const filterDOMProps = (props: any) => {
   const {
     animation,
@@ -48,34 +47,25 @@ export const Animate: React.FC<AnimateProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const [animated, setAnimated] = useState(false);
   const scrollObservers = useRef<Map<string, any>>(new Map());
-  
-  // Initialize scope and cleanup
+
   useEffect(() => {
     if (containerRef.current) {
       scope.current = createScope({ root: containerRef.current });
     }
-
     return () => {
-      scrollObservers.current.forEach(observer => {
-        if (observer?.remove) observer.remove();
-      });
+      scrollObservers.current.forEach(o => o?.remove?.());
       scrollObservers.current.clear();
-      if (scope.current?.revert) {
-        scope.current.revert();
-      }
+      scope.current?.revert?.();
     };
   }, []);
 
-  // Helper to get element by ID
   const getElementById = (id: string, parentId?: string): HTMLElement | null => {
     const parent = parentId ? 
       (containerRef.current?.querySelector(`#${parentId}`) as HTMLElement) || containerRef.current :
       containerRef.current;
-    
     return (parent?.querySelector(`#${id}`) as HTMLElement) || null;
   };
 
-  // Core animation function
   const animateElement = (
     element: HTMLElement,
     config: AnimationConfig = {}
@@ -83,11 +73,11 @@ export const Animate: React.FC<AnimateProps> = ({
     const animationName = config.animation || animation;
     let animeConfig: any = {
       targets: element,
-      duration: config.duration || duration || 1000,
-      delay: config.delay || delay || 0,
-      loop: config.loop || loop || 0,
-      direction: config.direction || direction || 'normal',
-      ease: config.ease || ease || 'easeOutQuad',
+      duration: config.duration ?? duration ?? 1000,
+      delay: config.delay ?? delay ?? 0,
+      loop: config.loop ?? loop ?? 0,
+      direction: config.direction ?? direction ?? 'normal',
+      ease: config.ease ?? ease ?? 'easeOutQuad',
     };
 
     if (animationName) {
@@ -106,10 +96,9 @@ export const Animate: React.FC<AnimateProps> = ({
 
     const safeConfig = sanitizeAnimeConfig(animeConfig);
 
-    return animate(safeConfig);
+    return animate(safeConfig as any);
   };
 
-  // Setup scroll animation for element
   const setupScrollAnimation = (
     element: HTMLElement,
     scrollConfig: ScrollConfig | boolean,
@@ -117,23 +106,15 @@ export const Animate: React.FC<AnimateProps> = ({
     id?: string
   ) => {
     if (typeof scrollConfig === 'boolean' && !scrollConfig) return;
-    
-    const config = typeof scrollConfig === 'boolean' ? { 
-      enabled: true, 
-      threshold: scrollThreshold || 0.3 
-    } : { 
-      threshold: scrollThreshold || 0.3, 
-      ...scrollConfig 
-    };
-    
+    const config = typeof scrollConfig === 'boolean' ? { enabled: true } : scrollConfig;
     if (!config.enabled) return;
 
     const observerConfig = sanitizeAnimeConfig({
       targets: element,
       onScroll: {
-        threshold: config.threshold,
+        threshold: config.threshold ?? scrollThreshold ?? 0.3,
         container: config.container,
-        axis: config.axis || 'y',
+        axis: config.axis ?? 'y',
         begin: () => {
           if (!animated || config.repeat) {
             animateElement(element, animConfig);
@@ -143,11 +124,8 @@ export const Animate: React.FC<AnimateProps> = ({
       }
     });
 
-    const scrollInstance = animate(observerConfig);
-
-    if (id) {
-      scrollObservers.current.set(`${id}_scroll`, scrollInstance);
-    }
+    const scrollInstance = animate(observerConfig as any);
+    if (id) scrollObservers.current.set(`${id}_scroll`, scrollInstance);
   };
 
   const playAnimation = () => {
@@ -168,16 +146,9 @@ export const Animate: React.FC<AnimateProps> = ({
       const childElement = getElementById(childConfig.id, childConfig.parentId);
       if (childElement) {
         if (childConfig.animateOnScroll) {
-          setupScrollAnimation(
-            childElement,
-            childConfig.animateOnScroll,
-            childConfig,
-            childConfig.id
-          );
+          setupScrollAnimation(childElement, childConfig.animateOnScroll, childConfig, childConfig.id);
         } else {
-          setTimeout(() => {
-            animateElement(childElement, childConfig);
-          }, childConfig.delay || 0);
+          animateElement(childElement, childConfig);
         }
       }
     });
@@ -186,9 +157,7 @@ export const Animate: React.FC<AnimateProps> = ({
   };
 
   useEffect(() => {
-    if (animateOnLoad && containerRef.current) {
-      playAnimation();
-    }
+    if (animateOnLoad && containerRef.current) playAnimation();
   }, [animateOnLoad]);
 
   useEffect(() => {
