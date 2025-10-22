@@ -1,7 +1,29 @@
-// placeholder for constants
-export const ANIMATION_PRESETS = ['fadeIn', 'fadeUp', 'slideUp', 'zoomIn', 'bounce', 'rotateRight'];
+import type { AnimationConfig, AnimationConfigs, AnimationName } from '../types';
 
-import type { AnimationConfig, AnimationConfigs, AnimationName } from "../types";
+// All animation preset names
+export const ANIMATION_PRESETS: AnimationName[] = [
+  // Fade animations
+  'fadeIn', 'fadeUp', 'fadeDown', 'fadeLeft', 'fadeRight',
+  // Scale animations
+  'scaleX', 'scaleY',
+  // Skew animations
+  'skewUp', 'skewDown',
+  // Rotate animations
+  'rotateLeft', 'rotateRight',
+  // Slide animations
+  'slideLeft', 'slideRight', 'slideUp', 'slideDown',
+  // Special animations
+  'bounce', 'pulse', 'shake', 'swing', 'tada',
+  // Flip animations
+  'flipX', 'flipY', 'flipInX', 'flipInY', 'flipOutX', 'flipOutY',
+  // Zoom animations
+  'zoomIn', 'zoomOut', 'zoomInUp', 'zoomInDown', 'zoomInLeft', 'zoomInRight',
+  'zoomOutUp', 'zoomOutDown', 'zoomOutLeft', 'zoomOutRight',
+  // Elastic animations
+  'elastic', 'elasticIn', 'elasticOut',
+  // Attention-seeking animations
+  'flash', 'headShake', 'heartBeat', 'jello', 'rubberBand', 'wobble'
+];
 
 // Default configuration map for each animation type
 export const animationDefaults: AnimationConfigs = {
@@ -33,23 +55,23 @@ export const animationDefaults: AnimationConfigs = {
   // Special animations
   bounce: {
     duration: 750,
-    direction: "normal",
+    direction: 'normal',
   },
   pulse: {
     duration: 500,
-    direction: "alternate",
+    direction: 'alternate',
   },
   shake: {
     duration: 500,
-    direction: "normal",
+    direction: 'normal',
   },
   swing: {
     duration: 600,
-    direction: "alternate",
+    direction: 'alternate',
   },
   tada: {
     duration: 800,
-    direction: "normal",
+    direction: 'normal',
   },
 
   // Flip animations
@@ -87,10 +109,10 @@ export const animationDefaults: AnimationConfigs = {
 };
 
 // Map animation names to anime.js properties
-export const animePropertiesMap: Record<AnimationName, AnimationConfig> = {
+export const animePropertiesMap: Record<AnimationName, any> = {
   fadeIn: {
     opacity: [0, 1],
-    ease: "inOutQuad",
+    ease: 'inOutQuad',
   },
   fadeUp: {
     opacity: [0, 1],
@@ -121,277 +143,299 @@ export const animePropertiesMap: Record<AnimationName, AnimationConfig> = {
     skewY: [-10, 0],
   },
   rotateLeft: {
-    rotate: ["10deg", "0deg"],
+    rotate: ['10deg', '0deg'],
   },
   rotateRight: {
-    rotate: ["-10deg", "0deg"],
+    rotate: ['-10deg', '0deg'],
   },
   slideLeft: {
-    translateX: ["-100%", 0],
+    translateX: ['-100%', 0],
   },
   slideRight: {
-    translateX: ["100%", 0],
+    translateX: ['100%', 0],
   },
   slideUp: {
-    translateY: ["100%", 0],
+    translateY: ['100%', 0],
   },
   slideDown: {
-    translateY: ["-100%", 0],
+    translateY: ['-100%', 0],
   },
   bounce: {
     translateY: [
-      { to: -15, duration: 150, ease: "outQuad" },
-      { to: 0, duration: 150, ease: "inQuad" },
-      { to: -7, duration: 150, ease: "outQuad" },
-      { to: 0, duration: 150, ease: "inQuad" },
-      { to: -3, duration: 150, ease: "outQuad" },
-      { to: 0, duration: 150, ease: "inQuad" },
+      { to: -15, ease: 'outQuad', duration: 150 },
+      { to: 0, ease: 'inQuad', duration: 150 },
+      { to: -7, ease: 'outQuad', duration: 150 },
+      { to: 0, ease: 'inQuad', duration: 150 },
+      { to: -3, ease: 'outQuad', duration: 150 },
+      { to: 0, ease: 'inQuad', duration: 150 },
     ],
-    ease: "linear",
+    ease: 'linear',
   },
   pulse: {
     scale: [1, 1.1, 1],
-    ease: "inOutSine",
+    ease: 'inOutSine',
   },
   shake: {
     translateX: [
-      { to: -10, duration: 100, ease: "inOutSine" },
-      { to: 10, duration: 100, ease: "inOutSine" },
-      { to: -8, duration: 100, ease: "inOutSine" },
-      { to: 8, duration: 100, ease: "inOutSine" },
-      { to: -5, duration: 100, ease: "inOutSine" },
-      { to: 0, duration: 100, ease: "inOutSine" },
+      { to: -10, duration: 100, ease: 'inOutSine' },
+      { to: 10, duration: 100, ease: 'inOutSine' },
+      { to: -8, duration: 100, ease: 'inOutSine' },
+      { to: 8, duration: 100, ease: 'inOutSine' },
+      { to: -5, duration: 100, ease: 'inOutSine' },
+      { to: 0, duration: 100, ease: 'inOutSine' },
     ],
-    ease: "linear",
+    ease: 'linear',
   },
   swing: {
     rotate: [
-      { to: "15deg", duration: 200, ease: "inOutSine" },
-      { to: "-10deg", duration: 200, ease: "inOutSine" },
-      { to: "5deg", duration: 200, ease: "inOutSine" },
-      { to: "0deg", duration: 200, ease: "inOutSine" },
+      { to: '15deg', duration: 200, ease: 'inOutSine' },
+      { to: '-10deg', duration: 200, ease: 'inOutSine' },
+      { to: '5deg', duration: 200, ease: 'inOutSine' },
+      { to: '0deg', duration: 200, ease: 'inOutSine' },
     ],
-    transformOrigin: ["top center"],
-    ease: "linear",
+    transformOrigin: ['top center'],
+    ease: 'linear',
   },
   tada: {
     scale: [
-      { to: 0.9, duration: 100, ease: "outSine" },
-      { to: 1.1, duration: 300, ease: "outQuad" },
-      { to: 1, duration: 300, ease: "outQuad" },
+      { to: 0.9, duration: 100, ease: 'outSine' },
+      { to: 1.1, duration: 300, ease: 'outQuad' },
+      { to: 1, duration: 300, ease: 'outQuad' },
     ],
     rotate: [
-      { to: "-3deg", duration: 100, ease: "inOutSine" },
-      { to: "3deg", duration: 100, ease: "inOutSine" },
-      { to: "-3deg", duration: 100, ease: "inOutSine" },
-      { to: "3deg", duration: 100, ease: "inOutSine" },
-      { to: "-3deg", duration: 100, ease: "inOutSine" },
-      { to: "3deg", duration: 100, ease: "inOutSine" },
-      { to: "0deg", duration: 100, ease: "inOutSine" },
+      { to: '-3deg', duration: 100, ease: 'inOutSine' },
+      { to: '3deg', duration: 100, ease: 'inOutSine' },
+      { to: '-3deg', duration: 100, ease: 'inOutSine' },
+      { to: '3deg', duration: 100, ease: 'inOutSine' },
+      { to: '-3deg', duration: 100, ease: 'inOutSine' },
+      { to: '3deg', duration: 100, ease: 'inOutSine' },
+      { to: '0deg', duration: 100, ease: 'inOutSine' },
     ],
-    ease: "linear",
+    ease: 'linear',
   },
 
   // Flip animations
   flipX: {
     rotateX: [0, 180],
-    ease: "inOutQuad",
+    ease: 'inOutQuad',
   },
   flipY: {
     rotateY: [0, 180],
-    ease: "inOutQuad",
+    ease: 'inOutQuad',
   },
   flipInX: {
     rotateX: [-90, 0],
     opacity: [0, 1],
-    ease: "outQuad",
+    ease: 'outQuad',
   },
   flipInY: {
     rotateY: [-90, 0],
     opacity: [0, 1],
-    ease: "outQuad",
+    ease: 'outQuad',
   },
   flipOutX: {
     rotateX: [0, 90],
     opacity: [1, 0],
-    ease: "inQuad",
+    ease: 'inQuad',
   },
   flipOutY: {
     rotateY: [0, 90],
     opacity: [1, 0],
-    ease: "inQuad",
+    ease: 'inQuad',
   },
 
   // Zoom animations
   zoomIn: {
     scale: [0, 1],
     opacity: [0, 1],
-    ease: "outQuad",
+    ease: 'outQuad',
   },
   zoomOut: {
     scale: [1, 0],
     opacity: [1, 0],
-    ease: "inQuad",
+    ease: 'inQuad',
   },
   zoomInUp: {
     scale: [0, 1],
     opacity: [0, 1],
     translateY: [50, 0],
-    ease: "outQuad",
+    ease: 'outQuad',
   },
   zoomInDown: {
     scale: [0, 1],
     opacity: [0, 1],
     translateY: [-50, 0],
-    ease: "outQuad",
+    ease: 'outQuad',
   },
   zoomInLeft: {
     scale: [0, 1],
     opacity: [0, 1],
     translateX: [50, 0],
-    ease: "outQuad",
+    ease: 'outQuad',
   },
   zoomInRight: {
     scale: [0, 1],
     opacity: [0, 1],
     translateX: [-50, 0],
-    ease: "outQuad",
+    ease: 'outQuad',
   },
   zoomOutUp: {
     scale: [1, 0],
     opacity: [1, 0],
     translateY: [0, -50],
-    ease: "inQuad",
+    ease: 'inQuad',
   },
   zoomOutDown: {
     scale: [1, 0],
     opacity: [1, 0],
     translateY: [0, 50],
-    ease: "inQuad",
+    ease: 'inQuad',
   },
   zoomOutLeft: {
     scale: [1, 0],
     opacity: [1, 0],
     translateX: [0, -50],
-    ease: "inQuad",
+    ease: 'inQuad',
   },
   zoomOutRight: {
     scale: [1, 0],
     opacity: [1, 0],
     translateX: [0, 50],
-    ease: "inQuad",
+    ease: 'inQuad',
   },
 
   // Elastic animations
   elastic: {
     scale: [
-      { to: 1.25, duration: 200, ease: "outQuad" },
-      { to: 0.75, duration: 200, ease: "outQuad" },
-      { to: 1.15, duration: 200, ease: "outQuad" },
-      { to: 1, duration: 200, ease: "outQuad" },
+      { to: 1.25, duration: 200, ease: 'outQuad' },
+      { to: 0.75, duration: 200, ease: 'outQuad' },
+      { to: 1.15, duration: 200, ease: 'outQuad' },
+      { to: 1, duration: 200, ease: 'outQuad' },
     ],
-    ease: "linear",
+    ease: 'linear',
   },
   elasticIn: {
     scale: [0, 1],
-    ease: "outQuad",
+    ease: 'outQuad',
   },
   elasticOut: {
     scale: [1, 0],
-    ease: "inQuad",
+    ease: 'inQuad',
   },
 
   // Attention-seeking animations
   flash: {
     opacity: [
-      { to: 0, duration: 125, ease: "inOutSine" },
-      { to: 1, duration: 125, ease: "inOutSine" },
-      { to: 0, duration: 125, ease: "inOutSine" },
-      { to: 1, duration: 125, ease: "inOutSine" },
+      { to: 0, duration: 125, ease: 'inOutSine' },
+      { to: 1, duration: 125, ease: 'inOutSine' },
+      { to: 0, duration: 125, ease: 'inOutSine' },
+      { to: 1, duration: 125, ease: 'inOutSine' },
     ],
-    ease: "linear",
+    ease: 'linear',
   },
   headShake: {
     translateX: [
-      { to: -6, duration: 100, ease: "inOutSine" },
-      { to: 5, duration: 100, ease: "inOutSine" },
-      { to: -3, duration: 100, ease: "inOutSine" },
-      { to: 2, duration: 100, ease: "inOutSine" },
-      { to: 0, duration: 200, ease: "inOutSine" },
+      { to: -6, duration: 100, ease: 'inOutSine' },
+      { to: 5, duration: 100, ease: 'inOutSine' },
+      { to: -3, duration: 100, ease: 'inOutSine' },
+      { to: 2, duration: 100, ease: 'inOutSine' },
+      { to: 0, duration: 200, ease: 'inOutSine' },
     ],
     rotate: [
-      { to: "-9deg", duration: 100, ease: "inOutSine" },
-      { to: "7deg", duration: 100, ease: "inOutSine" },
-      { to: "-5deg", duration: 100, ease: "inOutSine" },
-      { to: "3deg", duration: 100, ease: "inOutSine" },
-      { to: "0deg", duration: 200, ease: "inOutSine" },
+      { to: '-9deg', duration: 100, ease: 'inOutSine' },
+      { to: '7deg', duration: 100, ease: 'inOutSine' },
+      { to: '-5deg', duration: 100, ease: 'inOutSine' },
+      { to: '3deg', duration: 100, ease: 'inOutSine' },
+      { to: '0deg', duration: 200, ease: 'inOutSine' },
     ],
-    ease: "linear",
+    ease: 'linear',
   },
   heartBeat: {
     scale: [
-      { to: 1.3, duration: 140, ease: "outSine" },
-      { to: 1, duration: 140, ease: "inSine" },
-      { to: 1.3, duration: 140, ease: "outSine" },
-      { to: 1, duration: 380, ease: "inSine" },
+      { to: 1.3, duration: 140, ease: 'outSine' },
+      { to: 1, duration: 140, ease: 'inSine' },
+      { to: 1.3, duration: 140, ease: 'outSine' },
+      { to: 1, duration: 380, ease: 'inSine' },
     ],
-    ease: "linear",
+    ease: 'linear',
   },
   jello: {
     skewX: [
-      { to: "-12.5deg", duration: 111, ease: "inOutSine" },
-      { to: "6.25deg", duration: 111, ease: "inOutSine" },
-      { to: "-3.125deg", duration: 111, ease: "inOutSine" },
-      { to: "1.5625deg", duration: 111, ease: "inOutSine" },
-      { to: "-0.78125deg", duration: 111, ease: "inOutSine" },
-      { to: "0deg", duration: 45, ease: "inOutSine" },
+      { to: '-12.5deg', duration: 111, ease: 'inOutSine' },
+      { to: '6.25deg', duration: 111, ease: 'inOutSine' },
+      { to: '-3.125deg', duration: 111, ease: 'inOutSine' },
+      { to: '1.5625deg', duration: 111, ease: 'inOutSine' },
+      { to: '-0.78125deg', duration: 111, ease: 'inOutSine' },
+      { to: '0deg', duration: 45, ease: 'inOutSine' },
     ],
     skewY: [
-      { to: "-12.5deg", duration: 111, ease: "inOutSine" },
-      { to: "6.25deg", duration: 111, ease: "inOutSine" },
-      { to: "-3.125deg", duration: 111, ease: "inOutSine" },
-      { to: "1.5625deg", duration: 111, ease: "inOutSine" },
-      { to: "-0.78125deg", duration: 111, ease: "inOutSine" },
-      { to: "0deg", duration: 45, ease: "inOutSine" },
+      { to: '-12.5deg', duration: 111, ease: 'inOutSine' },
+      { to: '6.25deg', duration: 111, ease: 'inOutSine' },
+      { to: '-3.125deg', duration: 111, ease: 'inOutSine' },
+      { to: '1.5625deg', duration: 111, ease: 'inOutSine' },
+      { to: '-0.78125deg', duration: 111, ease: 'inOutSine' },
+      { to: '0deg', duration: 45, ease: 'inOutSine' },
     ],
-    ease: "linear",
+    ease: 'linear',
   },
   rubberBand: {
     scaleX: [
-      { to: 1.25, duration: 100, ease: "outSine" },
-      { to: 0.75, duration: 100, ease: "inSine" },
-      { to: 1.15, duration: 100, ease: "outSine" },
-      { to: 0.95, duration: 100, ease: "inSine" },
-      { to: 1.05, duration: 100, ease: "outSine" },
-      { to: 1, duration: 300, ease: "inSine" },
+      { to: 1.25, duration: 100, ease: 'outSine' },
+      { to: 0.75, duration: 100, ease: 'inSine' },
+      { to: 1.15, duration: 100, ease: 'outSine' },
+      { to: 0.95, duration: 100, ease: 'inSine' },
+      { to: 1.05, duration: 100, ease: 'outSine' },
+      { to: 1, duration: 300, ease: 'inSine' },
     ],
     scaleY: [
-      { to: 0.75, duration: 100, ease: "outSine" },
-      { to: 1.25, duration: 100, ease: "inSine" },
-      { to: 0.85, duration: 100, ease: "outSine" },
-      { to: 1.05, duration: 100, ease: "inSine" },
-      { to: 0.95, duration: 100, ease: "outSine" },
-      { to: 1, duration: 300, ease: "inSine" },
+      { to: 0.75, duration: 100, ease: 'outSine' },
+      { to: 1.25, duration: 100, ease: 'inSine' },
+      { to: 0.85, duration: 100, ease: 'outSine' },
+      { to: 1.05, duration: 100, ease: 'inSine' },
+      { to: 0.95, duration: 100, ease: 'outSine' },
+      { to: 1, duration: 300, ease: 'inSine' },
     ],
-    ease: "linear",
+    ease: 'linear',
   },
   wobble: {
     translateX: [
-      { to: -25, duration: 150, ease: "inOutSine" },
-      { to: 20, duration: 150, ease: "inOutSine" },
-      { to: -15, duration: 150, ease: "inOutSine" },
-      { to: 10, duration: 150, ease: "inOutSine" },
-      { to: -5, duration: 150, ease: "inOutSine" },
-      { to: 0, duration: 50, ease: "inOutSine" },
+      { to: -25, duration: 150, ease: 'inOutSine' },
+      { to: 20, duration: 150, ease: 'inOutSine' },
+      { to: -15, duration: 150, ease: 'inOutSine' },
+      { to: 10, duration: 150, ease: 'inOutSine' },
+      { to: -5, duration: 150, ease: 'inOutSine' },
+      { to: 0, duration: 50, ease: 'inOutSine' },
     ],
     rotate: [
-      { to: "-5deg", duration: 150, ease: "inOutSine" },
-      { to: "3deg", duration: 150, ease: "inOutSine" },
-      { to: "-3deg", duration: 150, ease: "inOutSine" },
-      { to: "2deg", duration: 150, ease: "inOutSine" },
-      { to: "-1deg", duration: 150, ease: "inOutSine" },
-      { to: "0deg", duration: 50, ease: "inOutSine" },
+      { to: '-5deg', duration: 150, ease: 'inOutSine' },
+      { to: '3deg', duration: 150, ease: 'inOutSine' },
+      { to: '-3deg', duration: 150, ease: 'inOutSine' },
+      { to: '2deg', duration: 150, ease: 'inOutSine' },
+      { to: '-1deg', duration: 150, ease: 'inOutSine' },
+      { to: '0deg', duration: 50, ease: 'inOutSine' },
     ],
-    ease: "linear",
+    ease: 'linear',
   },
+};
+
+// Helper to get animation properties by name
+export const getAnimationProperties = (name: AnimationName): any => {
+  return animePropertiesMap[name] || {};
+};
+
+// Helper to get animation defaults by name
+export const getAnimationDefaults = (name: AnimationName): Partial<AnimationConfig> => {
+  return animationDefaults[name] || {};
+};
+
+// Helper to merge animation config with presets
+export const mergeAnimationConfig = (
+  name: AnimationName,
+  customConfig: Partial<AnimationConfig> = {}
+): any => {
+  return {
+    ...animationDefaults[name],
+    ...animePropertiesMap[name],
+    ...customConfig,
+  };
 };
