@@ -1,8 +1,9 @@
-import anime from 'animejs';
+import { anime } from 'animejs';
 import { useEffect, useRef, useState } from 'react';
 import type { AnimationConfig, UseAnimationProps, AnimationTarget, ScrollConfig } from '../types';
 import { isElementInViewport } from '../utils/helpers';
 import React from 'react';
+import { animePropertiesMap, animationDefaults } from '../utils/constants';
 
 interface AnimateProps extends UseAnimationProps, React.HTMLAttributes<HTMLDivElement> {}
 
@@ -76,50 +77,33 @@ const getAnimationConfig = (
   duration?: number,
   delay?: number,
   loop?: number
-): anime.AnimeParams => {
-  const baseConfig: anime.AnimeParams = {
+) => {
+  if (!animation) return {};
+
+  const baseConfig: AnimationConfig = {
     duration: duration ?? 1000,
     delay: delay ?? 0,
     loop: loop ?? 0,
     easing: 'easeOutQuad',
   };
 
-  if (!animation) return baseConfig;
-
   if (typeof animation === 'string') {
     return {
       ...baseConfig,
-      ...getPresetAnimation(animation),
+      ...animationDefaults[animation],
+      ...animePropertiesMap[animation],
     };
   } else if (Array.isArray(animation)) {
+    // Merge every animation config
     const merged = animation.reduce((acc, anim) => {
       return {
         ...acc,
-        ...getPresetAnimation(anim),
+        ...animationDefaults[anim],
+        ...animePropertiesMap[anim],
       };
     }, baseConfig);
     return merged;
   }
 
   return baseConfig;
-};
-
-// Basic presets map
-const getPresetAnimation = (animation: string): anime.AnimeParams => {
-  switch (animation) {
-    case 'fadeIn':
-      return { opacity: [0, 1] };
-    case 'fadeUp':
-      return { opacity: [0, 1], translateY: [20, 0] };
-    case 'slideUp':
-      return { translateY: [50, 0], opacity: [0, 1] };
-    case 'zoomIn':
-      return { scale: [0, 1], opacity: [0, 1] };
-    case 'bounce':
-      return { translateY: [0, -30, 0], opacity: [1, 1] };
-    case 'rotateRight':
-      return { rotate: [0, 360] };
-    default:
-      return {};
-  }
 };
