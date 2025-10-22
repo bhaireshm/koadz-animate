@@ -1,15 +1,13 @@
 import { animate, createScope } from 'animejs';
-import { useEffect, useRef, useState } from 'react';
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { 
   AnimationConfig, 
   UseAnimationProps, 
-  AnimationTarget, 
   ScrollConfig,
   AnimationName
 } from '../types';
 import { mergeAnimationConfig } from '../utils/constants';
-import { useAnimation } from '../hooks/useAnimation';
+import { sanitizeAnimeConfig } from '../utils/animeSanitizer';
 
 // Filter out custom props from DOM attributes
 const filterDOMProps = (props: any) => {
@@ -58,13 +56,10 @@ export const Animate: React.FC<AnimateProps> = ({
     }
 
     return () => {
-      // Cleanup scroll observers
       scrollObservers.current.forEach(observer => {
-        if (observer.remove) observer.remove();
+        if (observer?.remove) observer.remove();
       });
       scrollObservers.current.clear();
-      
-      // Cleanup scope
       if (scope.current?.revert) {
         scope.current.revert();
       }
@@ -74,10 +69,10 @@ export const Animate: React.FC<AnimateProps> = ({
   // Helper to get element by ID
   const getElementById = (id: string, parentId?: string): HTMLElement | null => {
     const parent = parentId ? 
-      containerRef.current?.querySelector(`#${parentId}`) as HTMLElement || containerRef.current :
+      (containerRef.current?.querySelector(`#${parentId}`) as HTMLElement) || containerRef.current :
       containerRef.current;
     
-    return parent?.querySelector(`#${id}`) as HTMLElement || null;
+    return (parent?.querySelector(`#${id}`) as HTMLElement) || null;
   };
 
   // Core animation function
@@ -95,10 +90,8 @@ export const Animate: React.FC<AnimateProps> = ({
       ease: config.ease || ease || 'easeOutQuad',
     };
 
-    // Apply animation presets
     if (animationName) {
       if (Array.isArray(animationName)) {
-        // Merge multiple animations
         animationName.forEach(name => {
           const merged = mergeAnimationConfig(name as AnimationName, config);
           animeConfig = { ...animeConfig, ...merged };
@@ -109,10 +102,11 @@ export const Animate: React.FC<AnimateProps> = ({
       }
     }
 
-    // Remove non-anime properties
     delete animeConfig.animation;
-    
-    return animate(animeConfig);
+
+    const safeConfig = sanitizeAnimeConfig(animeConfig);
+
+    return animate(safeConfig);
   };
 
   // Setup scroll animation for element
@@ -134,10 +128,8 @@ export const Animate: React.FC<AnimateProps> = ({
     
     if (!config.enabled) return;
 
-    // Use anime.js onScroll method
-    const scrollInstance = animate({
+    const observerConfig = sanitizeAnimeConfig({
       targets: element,
-      duration: 0, // No initial animation
       onScroll: {
         threshold: config.threshold,
         container: config.container,
@@ -151,16 +143,16 @@ export const Animate: React.FC<AnimateProps> = ({
       }
     });
 
+    const scrollInstance = animate(observerConfig);
+
     if (id) {
       scrollObservers.current.set(`${id}_scroll`, scrollInstance);
     }
   };
 
-  // Main animation trigger
   const playAnimation = () => {
     if (!containerRef.current) return;
-    
-    // Animate main container
+
     if (animation) {
       animateElement(containerRef.current, {
         animation,
@@ -171,13 +163,11 @@ export const Animate: React.FC<AnimateProps> = ({
         ease
       });
     }
-    
-    // Handle child animations
+
     childAnimations.forEach((childConfig) => {
       const childElement = getElementById(childConfig.id, childConfig.parentId);
       if (childElement) {
         if (childConfig.animateOnScroll) {
-          // Setup scroll animation for child
           setupScrollAnimation(
             childElement,
             childConfig.animateOnScroll,
@@ -185,25 +175,22 @@ export const Animate: React.FC<AnimateProps> = ({
             childConfig.id
           );
         } else {
-          // Animate child immediately
           setTimeout(() => {
             animateElement(childElement, childConfig);
           }, childConfig.delay || 0);
         }
       }
     });
-    
+
     setAnimated(true);
   };
 
-  // On load animation
   useEffect(() => {
     if (animateOnLoad && containerRef.current) {
       playAnimation();
     }
   }, [animateOnLoad]);
 
-  // Setup main element scroll animation
   useEffect(() => {
     if (animateOnScroll && containerRef.current) {
       setupScrollAnimation(
@@ -215,7 +202,6 @@ export const Animate: React.FC<AnimateProps> = ({
     }
   }, [animateOnScroll]);
 
-  // Filter out custom props to avoid React warnings
   const domProps = filterDOMProps(rest);
 
   return (
