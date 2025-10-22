@@ -1,4 +1,4 @@
-import { animate, createScope } from 'animejs';
+import { animate, createScope, type Animation as JSAnimation } from 'animejs';
 import { useEffect, useRef, useState, RefObject } from 'react';
 import type { 
   AnimationConfig, 
@@ -29,27 +29,22 @@ export function useAnimation({
   const [animated, setAnimated] = useState(false);
   const scrollObservers = useRef<Map<string, any>>(new Map());
 
-  // Initialize scope on mount
   useEffect(() => {
     if (ref.current) {
       scope.current = createScope({ root: ref.current });
     }
 
     return () => {
-      // Cleanup all instances and observers
       instances.current.forEach(instance => {
-        if ((instance as any)?.remove) (instance as any).remove();
+        (instance as any)?.remove?.();
       });
       scrollObservers.current.forEach(observer => {
-        if (observer?.remove) observer.remove();
+        observer?.remove?.();
       });
-      if (scope.current?.revert) {
-        scope.current.revert();
-      }
+      scope.current?.revert?.();
     };
   }, []);
 
-  // Helper to get element by ID
   const getElementById = (id: string, parentId?: string): HTMLElement | null => {
     const parent = parentId ? 
       (ref.current?.querySelector(`#${parentId}`) as HTMLElement) || ref.current :
@@ -58,7 +53,6 @@ export function useAnimation({
     return (parent?.querySelector(`#${id}`) as HTMLElement) || null;
   };
 
-  // Core animation function
   const animateElement = (
     element: HTMLElement,
     config: AnimationConfig = {},
@@ -67,14 +61,13 @@ export function useAnimation({
     const animationName = config.animation || animation;
     let animeConfig: any = {
       targets: element,
-      duration: config.duration || duration,
-      delay: config.delay || delay,
-      loop: config.loop || loop,
-      direction: config.direction || 'normal',
-      ease: config.ease || 'easeOutQuad',
+      duration: config.duration ?? duration,
+      delay: config.delay ?? delay,
+      loop: config.loop ?? loop,
+      direction: config.direction ?? 'normal',
+      ease: config.ease ?? 'easeOutQuad',
     };
 
-    // Apply animation presets
     if (animationName) {
       if (Array.isArray(animationName)) {
         animationName.forEach(name => {
@@ -87,22 +80,17 @@ export function useAnimation({
       }
     }
 
-    // Remove non-anime properties
     delete animeConfig.animation;
 
-    // Sanitize and normalize
     const safeConfig = sanitizeAnimeConfig(animeConfig);
 
-    const instance = animate(safeConfig) as AnimeInstance;
-    
+    const instance = animate(safeConfig as any) as unknown as AnimeInstance;
     if (id) {
       instances.current.set(id, instance);
     }
-    
     return instance;
   };
 
-  // Animate by element ID
   const animateById = (id: string, parentId?: string, config: AnimationConfig = {}): void => {
     const element = getElementById(id, parentId);
     if (element) {
@@ -110,7 +98,6 @@ export function useAnimation({
     }
   };
 
-  // Setup scroll animation for element
   const setupScrollAnimation = (
     element: HTMLElement,
     scrollConfig: ScrollConfig | boolean,
@@ -118,17 +105,15 @@ export function useAnimation({
     id?: string
   ) => {
     if (typeof scrollConfig === 'boolean' && !scrollConfig) return;
-    
     const config = typeof scrollConfig === 'boolean' ? { enabled: true } : scrollConfig;
     if (!config.enabled) return;
 
-    // Use anime.js onScroll method with a separate animate call in begin
     const observerConfig = sanitizeAnimeConfig({
       targets: element,
       onScroll: {
-        threshold: config.threshold || 0.3,
+        threshold: config.threshold ?? 0.3,
         container: config.container,
-        axis: config.axis || 'y',
+        axis: config.axis ?? 'y',
         begin: () => {
           if (!animated || config.repeat) {
             animateElement(element, animConfig, id);
@@ -138,18 +123,15 @@ export function useAnimation({
       }
     });
 
-    const scrollInstance = animate(observerConfig);
-
+    const scrollInstance = animate(observerConfig as any);
     if (id) {
       scrollObservers.current.set(`${id}_scroll`, scrollInstance);
     }
   };
 
-  // Main play function
   const play = (): void => {
     if (!ref.current) return;
-    
-    // Animate main element
+
     if (animation) {
       animateElement(ref.current, {
         animation,
@@ -158,12 +140,10 @@ export function useAnimation({
         loop
       }, 'main');
     }
-    
-    // Handle child animations
+
     childAnimations.forEach((childConfig) => {
       const childElement = getElementById(childConfig.id, childConfig.parentId);
       if (childElement) {
-        // Setup scroll animation if needed
         if (childConfig.animateOnScroll) {
           setupScrollAnimation(
             childElement,
@@ -172,16 +152,14 @@ export function useAnimation({
             childConfig.id
           );
         } else {
-          // Animate immediately
           animateElement(childElement, childConfig, childConfig.id);
         }
       }
     });
-    
+
     setAnimated(true);
   };
 
-  // Update configuration for specific elements
   const updateConfig = (
     newConfig: UpdateAnimationConfig,
     targetId?: string,
@@ -191,12 +169,12 @@ export function useAnimation({
       const element = getElementById(targetId, targetParentId);
       if (element) {
         const existingInstance = instances.current.get(targetId);
-        if ((existingInstance as any)?.remove) (existingInstance as any).remove();
+        (existingInstance as any)?.remove?.();
         animateElement(element, newConfig, targetId);
       }
     } else if (ref.current) {
       const existingInstance = instances.current.get('main');
-      if ((existingInstance as any)?.remove) (existingInstance as any).remove();
+      (existingInstance as any)?.remove?.();
       animateElement(ref.current, {
         animation,
         duration,
@@ -207,7 +185,6 @@ export function useAnimation({
     }
   };
 
-  // Setup effects
   useEffect(() => {
     if (animateOnLoad && ref.current) {
       play();
