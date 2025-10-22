@@ -11,6 +11,7 @@ import type {
   AnimationName
 } from '../types';
 import { mergeAnimationConfig } from '../utils/constants';
+import { sanitizeAnimeConfig } from '../utils/animeSanitizer';
 
 export function useAnimation({
   animation,
@@ -37,10 +38,10 @@ export function useAnimation({
     return () => {
       // Cleanup all instances and observers
       instances.current.forEach(instance => {
-        if (instance.remove) instance.remove();
+        if ((instance as any)?.remove) (instance as any).remove();
       });
       scrollObservers.current.forEach(observer => {
-        if (observer.remove) observer.remove();
+        if (observer?.remove) observer.remove();
       });
       if (scope.current?.revert) {
         scope.current.revert();
@@ -51,10 +52,10 @@ export function useAnimation({
   // Helper to get element by ID
   const getElementById = (id: string, parentId?: string): HTMLElement | null => {
     const parent = parentId ? 
-      ref.current?.querySelector(`#${parentId}`) as HTMLElement || ref.current :
+      (ref.current?.querySelector(`#${parentId}`) as HTMLElement) || ref.current :
       ref.current;
     
-    return parent?.querySelector(`#${id}`) as HTMLElement || null;
+    return (parent?.querySelector(`#${id}`) as HTMLElement) || null;
   };
 
   // Core animation function
@@ -69,13 +70,13 @@ export function useAnimation({
       duration: config.duration || duration,
       delay: config.delay || delay,
       loop: config.loop || loop,
+      direction: config.direction || 'normal',
       ease: config.ease || 'easeOutQuad',
     };
 
     // Apply animation presets
     if (animationName) {
       if (Array.isArray(animationName)) {
-        // Merge multiple animations
         animationName.forEach(name => {
           const merged = mergeAnimationConfig(name as AnimationName, config);
           animeConfig = { ...animeConfig, ...merged };
@@ -88,8 +89,11 @@ export function useAnimation({
 
     // Remove non-anime properties
     delete animeConfig.animation;
-    
-    const instance = animate(animeConfig) as AnimeInstance;
+
+    // Sanitize and normalize
+    const safeConfig = sanitizeAnimeConfig(animeConfig);
+
+    const instance = animate(safeConfig) as AnimeInstance;
     
     if (id) {
       instances.current.set(id, instance);
@@ -116,13 +120,11 @@ export function useAnimation({
     if (typeof scrollConfig === 'boolean' && !scrollConfig) return;
     
     const config = typeof scrollConfig === 'boolean' ? { enabled: true } : scrollConfig;
-    
     if (!config.enabled) return;
 
-    // Use anime.js onScroll method
-    const scrollInstance = animate({
+    // Use anime.js onScroll method with a separate animate call in begin
+    const observerConfig = sanitizeAnimeConfig({
       targets: element,
-      duration: 0, // No initial animation
       onScroll: {
         threshold: config.threshold || 0.3,
         container: config.container,
@@ -135,6 +137,8 @@ export function useAnimation({
         }
       }
     });
+
+    const scrollInstance = animate(observerConfig);
 
     if (id) {
       scrollObservers.current.set(`${id}_scroll`, scrollInstance);
@@ -156,7 +160,7 @@ export function useAnimation({
     }
     
     // Handle child animations
-    childAnimations.forEach((childConfig, index) => {
+    childAnimations.forEach((childConfig) => {
       const childElement = getElementById(childConfig.id, childConfig.parentId);
       if (childElement) {
         // Setup scroll animation if needed
@@ -186,22 +190,13 @@ export function useAnimation({
     if (targetId) {
       const element = getElementById(targetId, targetParentId);
       if (element) {
-        // Remove existing instance
         const existingInstance = instances.current.get(targetId);
-        if (existingInstance?.remove) {
-          existingInstance.remove();
-        }
-        
-        // Create new animation with updated config
+        if ((existingInstance as any)?.remove) (existingInstance as any).remove();
         animateElement(element, newConfig, targetId);
       }
     } else if (ref.current) {
-      // Update main element
       const existingInstance = instances.current.get('main');
-      if (existingInstance?.remove) {
-        existingInstance.remove();
-      }
-      
+      if ((existingInstance as any)?.remove) (existingInstance as any).remove();
       animateElement(ref.current, {
         animation,
         duration,
@@ -218,7 +213,6 @@ export function useAnimation({
       play();
     }
 
-    // Setup main element scroll animation
     if (animateOnScroll && ref.current) {
       setupScrollAnimation(
         ref.current,
